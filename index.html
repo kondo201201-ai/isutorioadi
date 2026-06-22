@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ja">
   <head>
@@ -10,11 +11,9 @@
     <main class="app">
       <section class="hero">
         <div>
-          <p class="badge">集会 / 椅子取りゲーム版</p>
-          <h1><br />お題入力用</h1>
-          <p class="lead">
-            中学生向けのお題を、入れましょう！
-          </p>
+          <p class="badge">9月の集会 / 椅子取りゲーム版</p>
+          <h1>お題入力用</h1>
+          <p class="lead">中学生向けのお題を、入れましょう！</p>
         </div>
         <div class="hero-card" aria-label="入力状況">
           <span>登録済み</span>
@@ -80,6 +79,22 @@
         </div>
         <textarea id="sheetText" readonly rows="8"></textarea>
         <p class="hint">ここをコピーして、GoogleスプレッドシートのA1に貼り付けると1行ずつ入ります。</p>
+      </section>
+
+      <section class="panel backup-panel">
+        <div class="panel-title">
+          <p>保存の安全対策</p>
+          <h2>バックアップ</h2>
+        </div>
+        <div class="backup-actions">
+          <button class="secondary-button" id="backupButton" type="button">バックアップを保存</button>
+          <label class="file-button">
+            バックアップから復元
+            <input id="restoreInput" type="file" accept="application/json,.json" />
+          </label>
+        </div>
+        <p id="saveStatus" class="save-status">保存状態を確認しています。</p>
+        <p class="hint">大事なお題は、作業の最後にバックアップを保存しておくと安心です。</p>
       </section>
     </main>
 
