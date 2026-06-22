@@ -1,120 +1,9 @@
-const storageKey = "rhk-chair-game-topics";
+    request.onerror = () => resolve(null);
+    transaction.onerror = () => resolve(null);
+  });
 
-const samples = [
-  "M!LK知ってる人！",
-  "Mrs. GREEN APPLE（ミセス・グリーン・アップル）の歌が好きな人",
-  "泳ぐのが好きな人！",
-];
-
-let topics = loadTopics();
-
-const form = document.querySelector("#topicForm");
-const nameInput = document.querySelector("#nameInput");
-const topicInputs = [document.querySelector("#topic1"), document.querySelector("#topic2"), document.querySelector("#topic3")];
-const searchInput = document.querySelector("#searchInput");
-const topicList = document.querySelector("#topicList");
-const sheetText = document.querySelector("#sheetText");
-const totalTopics = document.querySelector("#totalTopics");
-const copyButton = document.querySelector("#copyButton");
-
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  const owner = nameInput.value.trim() || "名前なし";
-  const newTopics = topicInputs
-    .map((input) => input.value.trim())
-    .filter(Boolean)
-    .map((text) => ({
-      id: crypto.randomUUID(),
-      text,
-      owner,
-      createdAt: new Date().toISOString(),
-    }));
-
-  if (newTopics.length === 0) return;
-
-  topics.push(...newTopics);
-  saveTopics();
-  form.reset();
-  topicInputs[0].focus();
-  render();
-});
-
-searchInput.addEventListener("input", render);
-
-copyButton.addEventListener("click", async () => {
-  const text = toSheetText(topics);
-
-  try {
-    await navigator.clipboard.writeText(text);
-    copyButton.textContent = "コピー済み";
-  } catch {
-    sheetText.focus();
-    sheetText.select();
-    copyButton.textContent = "選択しました";
-  }
-
-  setTimeout(() => {
-    copyButton.textContent = "コピー";
-  }, 1400);
-});
-
-topicList.addEventListener("click", (event) => {
-  const deleteButton = event.target.closest("[data-delete-id]");
-  const moveButton = event.target.closest("[data-move-id]");
-  const editButton = event.target.closest("[data-edit-id]");
-  const saveButton = event.target.closest("[data-save-id]");
-  const cancelButton = event.target.closest("[data-cancel-id]");
-
-  if (deleteButton) {
-    topics = topics.filter((topic) => topic.id !== deleteButton.dataset.deleteId);
-    saveTopics();
-    render();
-    return;
-  }
-
-  if (moveButton) {
-    moveTopic(moveButton.dataset.moveId, moveButton.dataset.direction);
-    return;
-  }
-
-  if (editButton) {
-    setEditing(editButton.dataset.editId);
-    return;
-  }
-
-  if (saveButton) {
-    saveEdit(saveButton.dataset.saveId);
-    return;
-  }
-
-  if (cancelButton) {
-    setEditing(null);
-  }
-});
-
-let editingId = null;
-
-function loadTopics() {
-  const saved = localStorage.getItem(storageKey);
-  if (!saved) {
-    return samples.map((text) => ({
-      id: crypto.randomUUID(),
-      text,
-      owner: "サンプル",
-      createdAt: new Date().toISOString(),
-    }));
-  }
-
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return [];
-  }
-}
-
-function saveTopics() {
-  localStorage.setItem(storageKey, JSON.stringify(topics));
+  db.close();
+  return value;
 }
 
 function render() {
@@ -208,6 +97,7 @@ function saveEdit(id) {
 
   topic.text = nextText;
   topic.owner = ownerInput?.value.trim() || "名前なし";
+  topic.updatedAt = new Date().toISOString();
   editingId = null;
   saveTopics();
   render();
@@ -215,6 +105,38 @@ function saveEdit(id) {
 
 function toSheetText(items) {
   return items.map((topic) => topic.text).join("\n");
+}
+
+function setTemporaryButtonText(button, text, originalText) {
+  button.textContent = text;
+  setTimeout(() => {
+    button.textContent = originalText;
+  }, 1400);
+}
+
+function setSaveStatus(message, isWarning = false) {
+  saveStatus.textContent = message;
+  saveStatus.classList.toggle("warning", isWarning);
+}
+
+async function requestPersistentStorage() {
+  if (!navigator.storage?.persist) {
+    setSaveStatus("自動保存の準備ができています。");
+    return;
+  }
+
+  try {
+    const isPersisted = await navigator.storage.persisted();
+    const granted = isPersisted || (await navigator.storage.persist());
+    setSaveStatus(granted ? "自動保存済みです。" : "自動保存中です。大事なお題はバックアップも保存してください。", !granted);
+  } catch {
+    setSaveStatus("自動保存中です。大事なお題はバックアップも保存してください。", true);
+  }
+}
+
+function formatDateForFile(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
 }
 
 function escapeAttribute(value) {
