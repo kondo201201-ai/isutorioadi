@@ -1,3 +1,4 @@
+const spreadsheetEndpoint = "https://script.google.com/macros/s/AKfycby9mWFyJyYpStmIkJVjF8r-ciatKLtPyewnQjx5TPKvHEiTAQllGheHboZ7RejRK7ZxbA/exec";
 const storageKey = "rhk-chair-game-topics";
 const backupKey = "rhk-chair-game-topics-backup";
 const sessionKey = "rhk-chair-game-topics-session";
@@ -28,8 +29,10 @@ const saveStatus = document.querySelector("#saveStatus");
 
 requestPersistentStorage();
 restoreFromBrowserDatabase();
+loadSharedTopics();
+setInterval(loadSharedTopics, 30000);
 
-form?.addEventListener("submit", (event) => {
+form?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const owner = nameInput?.value.trim() || "名前なし";
@@ -48,9 +51,15 @@ form?.addEventListener("submit", (event) => {
 
   topics.push(...newTopics);
   saveTopics();
+  render();
+
+  const sent = await sendTopicsToSpreadsheet(newTopics);
   form.reset();
   topicInputs[0]?.focus();
-  render();
+  if (sent) {
+    await loadSharedTopics();
+  }
+  setSaveStatus(sent ? "登録して、みんなの一覧に反映しました。" : "この端末に保存しました。共有保存はまだ未設定です。");
 });
 
 searchInput?.addEventListener("input", render);
@@ -152,6 +161,46 @@ window.addEventListener("storage", (event) => {
     setSaveStatus("別のタブで保存された内容を反映しました。");
   }
 });
+
+async function sendTopicsToSpreadsheet(newTopics) {
+  if (!spreadsheetEndpoint) return false;
+
+  try {
+    await fetch(spreadsheetEndpoint, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        owner: newTopics[0]?.owner || "名前なし",
+        topics: newTopics.map((topic) => topic.text),
+        sentAt: new Date().toISOString(),
+      }),
+    });
+    return true;
+  } catch {
+    setSaveStatus("送信に失敗しました。この端末には保存されています。", true);
+    return false;
+  }
+}
+
+async function loadSharedTopics() {
+  if (!spreadsheetEndpoint) return;
+
+  try {
+    const response = await fetch(`${spreadsheetEndpoint}?t=${Date.now()}`);
+    const data = await response.json();
+    const sharedTopics = parseSavedTopics(JSON.stringify(data.topics || []));
+    if (!sharedTopics.length && topics.length > 0) return;
+
+    topics = sharedTopics;
+    editingId = null;
+    saveTopics();
+    render();
+    setSaveStatus("みんなの投稿一覧を読み込みました。");
+  } catch {
+    setSaveStatus("共有一覧を読み込めませんでした。この端末の保存内容を表示しています。", true);
+  }
+}
 
 function loadTopics() {
   const candidates = [localStorage.getItem(storageKey), localStorage.getItem(backupKey), sessionStorage.getItem(sessionKey)]
