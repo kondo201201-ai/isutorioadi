@@ -26,6 +26,7 @@ const copyButton = document.querySelector("#copyButton");
 const backupButton = document.querySelector("#backupButton");
 const restoreInput = document.querySelector("#restoreInput");
 const saveStatus = document.querySelector("#saveStatus");
+const sharedStatus = document.querySelector("#sharedStatus");
 
 requestPersistentStorage();
 restoreFromBrowserDatabase();
@@ -163,7 +164,10 @@ window.addEventListener("storage", (event) => {
 });
 
 async function sendTopicsToSpreadsheet(newTopics) {
-  if (!spreadsheetEndpoint) return false;
+  if (!spreadsheetEndpoint) {
+    setSharedStatus("共有保存は未設定です。", true);
+    return false;
+  }
 
   try {
     const params = new URLSearchParams({
@@ -174,16 +178,24 @@ async function sendTopicsToSpreadsheet(newTopics) {
       topic3: newTopics[2]?.text || "",
     });
     const data = await loadJsonp(`${spreadsheetEndpoint}?${params.toString()}`);
-    if (!data?.ok) return false;
+    if (!data?.ok) {
+      setSharedStatus("スプレッドシートへ送信できませんでした。", true);
+      return false;
+    }
+    setSharedStatus("スプレッドシートへ送信しました。");
     return true;
   } catch {
+    setSharedStatus("スプレッドシートへ送信できませんでした。", true);
     setSaveStatus("送信に失敗しました。この端末には保存されています。", true);
     return false;
   }
 }
 
 async function loadSharedTopics() {
-  if (!spreadsheetEndpoint) return;
+  if (!spreadsheetEndpoint) {
+    setSharedStatus("共有一覧は未設定です。", true);
+    return;
+  }
 
   try {
     const data = await loadJsonp(spreadsheetEndpoint);
@@ -194,8 +206,10 @@ async function loadSharedTopics() {
     editingId = null;
     saveTopics();
     render();
+    setSharedStatus(`共有一覧を読み込みました。${sharedTopics.length}件`);
     setSaveStatus("みんなの投稿一覧を読み込みました。");
   } catch {
+    setSharedStatus("共有一覧を読み込めませんでした。Apps Scriptのデプロイを確認してください。", true);
     setSaveStatus("共有一覧を読み込めませんでした。この端末の保存内容を表示しています。", true);
   }
 }
@@ -509,6 +523,13 @@ function setSaveStatus(message, isWarning = false) {
 
   saveStatus.textContent = message;
   saveStatus.classList.toggle("warning", isWarning);
+}
+
+function setSharedStatus(message, isWarning = false) {
+  if (!sharedStatus) return;
+
+  sharedStatus.textContent = message;
+  sharedStatus.classList.toggle("warning", isWarning);
 }
 
 async function requestPersistentStorage() {
