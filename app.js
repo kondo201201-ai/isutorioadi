@@ -166,16 +166,15 @@ async function sendTopicsToSpreadsheet(newTopics) {
   if (!spreadsheetEndpoint) return false;
 
   try {
-    await fetch(spreadsheetEndpoint, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        owner: newTopics[0]?.owner || "名前なし",
-        topics: newTopics.map((topic) => topic.text),
-        sentAt: new Date().toISOString(),
-      }),
+    const params = new URLSearchParams({
+      action: "add",
+      owner: newTopics[0]?.owner || "名前なし",
+      topic1: newTopics[0]?.text || "",
+      topic2: newTopics[1]?.text || "",
+      topic3: newTopics[2]?.text || "",
     });
+    const data = await loadJsonp(`${spreadsheetEndpoint}?${params.toString()}`);
+    if (!data?.ok) return false;
     return true;
   } catch {
     setSaveStatus("送信に失敗しました。この端末には保存されています。", true);
