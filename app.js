@@ -187,8 +187,7 @@ async function loadSharedTopics() {
   if (!spreadsheetEndpoint) return;
 
   try {
-    const response = await fetch(`${spreadsheetEndpoint}?t=${Date.now()}`);
-    const data = await response.json();
+    const data = await loadJsonp(spreadsheetEndpoint);
     const sharedTopics = parseSavedTopics(JSON.stringify(data.topics || []));
     if (!sharedTopics.length && topics.length > 0) return;
 
@@ -200,6 +199,37 @@ async function loadSharedTopics() {
   } catch {
     setSaveStatus("共有一覧を読み込めませんでした。この端末の保存内容を表示しています。", true);
   }
+}
+
+function loadJsonp(url) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `rhkTopicsCallback_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const script = document.createElement("script");
+    const separator = url.includes("?") ? "&" : "?";
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("読み込みがタイムアウトしました。"));
+    }, 12000);
+
+    window[callbackName] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("読み込みに失敗しました。"));
+    };
+
+    script.src = `${url}${separator}callback=${encodeURIComponent(callbackName)}&t=${Date.now()}`;
+    document.body.appendChild(script);
+
+    function cleanup() {
+      window.clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+  });
 }
 
 function loadTopics() {
