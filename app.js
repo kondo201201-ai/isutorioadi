@@ -1,5 +1,5 @@
 const spreadsheetEndpoint = "https://script.google.com/macros/s/AKfycby9mWFyJyYpStmIkJVjF8r-ciatKLtPyewnQjx5TPKvHEiTAQllGheHboZ7RejRK7ZxbA/exec";
-const appVersion = "20260624-4";
+const appVersion = "20260624-5";
 const storageKey = "rhk-chair-game-topics";
 const backupKey = "rhk-chair-game-topics-backup";
 const sessionKey = "rhk-chair-game-topics-session";
