@@ -1,4 +1,5 @@
 const spreadsheetEndpoint = "https://script.google.com/macros/s/AKfycby9mWFyJyYpStmIkJVjF8r-ciatKLtPyewnQjx5TPKvHEiTAQllGheHboZ7RejRK7ZxbA/exec";
+const appVersion = "20260624-4";
 const storageKey = "rhk-chair-game-topics";
 const backupKey = "rhk-chair-game-topics-backup";
 const sessionKey = "rhk-chair-game-topics-session";
@@ -30,6 +31,7 @@ const sharedStatus = document.querySelector("#sharedStatus");
 
 requestPersistentStorage();
 restoreFromBrowserDatabase();
+setSharedStatus(`GitHub版 ${appVersion} で共有一覧を確認中です。`);
 loadSharedTopics();
 setInterval(loadSharedTopics, 30000);
 
