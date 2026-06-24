@@ -304,6 +304,46 @@ textarea {
   margin-top: 20px;
 }
 
+.backup-panel {
+  margin-top: 20px;
+}
+
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 10px 15px;
+  background: #eefbf9;
+  color: var(--mint-dark);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.save-status {
+  margin: 14px 0 0;
+  color: var(--mint-dark);
+  font-weight: 900;
+}
+
+.save-status.warning {
+  color: var(--danger);
+}
+
 .hint {
   margin: 10px 0 0;
   color: var(--muted);
